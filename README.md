@@ -70,20 +70,16 @@ python app.py
 ```bash
 python app.py --unit
 python app.py --integration
-python app.py --port 8080
+python app.py --port 0            # случайный свободный порт (по умолчанию)
+python app.py --port 8080         # фиксированный порт
 python app.py --no-serve          # только отчёт, без HTTP-сервера
 ```
 
-После запуска ссылка на скачивание:
+После запуска порт выбирается случайно; точная ссылка печатается в консоль, например:
 
 ```
-http://127.0.0.1:8080/reports/ncins200_test_results_latest.zip
-```
-
-Страница отчёта:
-
-```
-http://127.0.0.1:8080/reports/index.html
+http://127.0.0.1:<random-port>/reports/ncins200_test_results_latest.zip
+http://127.0.0.1:<random-port>/reports/index.html
 ```
 
 Альтернативно через pytest:

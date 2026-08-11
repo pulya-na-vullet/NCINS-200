@@ -5,7 +5,8 @@ Usage:
     python app.py
     python app.py --unit
     python app.py --integration
-    python app.py --port 8080
+    python app.py --port 0          # random free port (default)
+    python app.py --port 8080       # fixed port
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import socket
 import subprocess
 import sys
 import webbrowser
@@ -25,7 +27,8 @@ from urllib.parse import quote
 ROOT = Path(__file__).resolve().parent
 REPORTS_DIR = ROOT / "reports"
 ARTIFACTS_DIR = Path("/opt/cursor/artifacts")
-DEFAULT_PORT = 8080
+# 0 = OS picks a random free port for the report server
+DEFAULT_PORT = 0
 
 
 def _ensure_dirs() -> None:
@@ -124,6 +127,13 @@ def public_host(host: str) -> str:
     return "127.0.0.1" if host in {"0.0.0.0", "::"} else host
 
 
+def create_report_server(host: str, port: int) -> tuple[ThreadingHTTPServer, int]:
+    """Bind report HTTP server. port<=0 selects a random free port."""
+    requested = port if port and port > 0 else 0
+    server = ThreadingHTTPServer((host, requested), QuietHandler)
+    return server, int(server.server_address[1])
+
+
 def write_index_page(zip_path: Path, html_report: Path, exit_code: int, host: str, port: int) -> Path:
     status = "OK" if exit_code == 0 else f"COMPLETED_WITH_CODE_{exit_code}"
     shown_host = public_host(host)
@@ -182,14 +192,14 @@ class QuietHandler(SimpleHTTPRequestHandler):
         sys.stdout.write("%s - %s\n" % (self.address_string(), format % args))
 
 
-def serve(host: str, port: int, open_browser: bool) -> None:
-    server = ThreadingHTTPServer((host, port), QuietHandler)
+def serve(server: ThreadingHTTPServer, host: str, port: int, open_browser: bool) -> None:
     shown_host = public_host(host)
     download_latest = f"http://{shown_host}:{port}/reports/ncins200_test_results_latest.zip"
     page = f"http://{shown_host}:{port}/reports/index.html"
     print()
     print("=" * 64)
     print("Сервер отчётов запущен")
+    print(f"Порт:                  {port}")
     print(f"Страница:              {page}")
     print(f"Ссылка на скачивание:  {download_latest}")
     print("=" * 64)
@@ -214,7 +224,12 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--integration", action="store_true", help="Только integration-тесты")
     group.add_argument("--all", action="store_true", help="Все тесты (по умолчанию)")
     parser.add_argument("--host", default="127.0.0.1", help="Host HTTP-сервера отчётов")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Порт HTTP-сервера отчётов")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_PORT,
+        help="Порт HTTP-сервера отчётов (0 = случайный свободный порт, по умолчанию)",
+    )
     parser.add_argument("--no-serve", action="store_true", help="Только прогнать тесты, не поднимать сервер")
     parser.add_argument("--no-browser", action="store_true", help="Не открывать браузер")
     return parser.parse_args()
@@ -226,23 +241,45 @@ def main() -> int:
 
     exit_code, html_report, junit_report = run_tests(marker)
     zip_path = build_download_bundle(html_report, junit_report, exit_code)
-    write_index_page(zip_path, html_report, exit_code, args.host, args.port)
+
+    server: ThreadingHTTPServer | None = None
+    if args.no_serve:
+        # Still resolve a display port for links in index.html when not serving.
+        port = args.port if args.port and args.port > 0 else 0
+    else:
+        server, port = create_report_server(args.host, args.port)
+
+    write_index_page(zip_path, html_report, exit_code, args.host, port or 0)
 
     shown_host = public_host(args.host)
-    download_latest = f"http://{shown_host}:{args.port}/reports/ncins200_test_results_latest.zip"
+    if port:
+        download_latest = f"http://{shown_host}:{port}/reports/ncins200_test_results_latest.zip"
+    else:
+        download_latest = str(ARTIFACTS_DIR / "ncins200_test_results_latest.zip")
     artifact_latest = ARTIFACTS_DIR / "ncins200_test_results_latest.zip"
 
     print()
     print("Готово.")
     print(f"ZIP отчёт:             {zip_path}")
     print(f"Артефакт:              {artifact_latest}")
-    print(f"Ссылка на скачивание:  {download_latest}")
+    if port:
+        print(f"Порт отчёта:           {port}")
+        print(f"Ссылка на скачивание:  {download_latest}")
+    else:
+        print(f"Скачать отчёт:         {artifact_latest}")
     print()
 
-    if args.no_serve:
+    if port:
+        (REPORTS_DIR / "server_port.txt").write_text(str(port), encoding="utf-8")
+        (ARTIFACTS_DIR / "ncins200_report_server_url.txt").write_text(
+            f"{download_latest}\n",
+            encoding="utf-8",
+        )
+
+    if args.no_serve or server is None:
         return 0 if exit_code == 0 else exit_code
 
-    serve(args.host, args.port, open_browser=not args.no_browser)
+    serve(server, args.host, port, open_browser=not args.no_browser)
     return 0 if exit_code == 0 else exit_code
 
 
