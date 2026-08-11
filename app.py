@@ -26,17 +26,14 @@ JUNIT_XML = REPORTS_DIR / "junit.xml"
 TEXT_REPORT = REPORTS_DIR / "report.txt"
 
 
-class _SafeStreamHandler(logging.StreamHandler):
-    """Windows-friendly handler: не падает на WinError 6 (неверный дескриптор)."""
+class _PrintHandler(logging.Handler):
+    """Лог в консоль через print — без WinError 6 на сломанном stdout в Windows/pytest."""
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
-            super().emit(record)
-        except OSError:
-            try:
-                sys.__stdout__.write(self.format(record) + "\n")
-            except Exception:
-                pass
+            print(self.format(record), flush=True)
+        except Exception:
+            pass
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -46,16 +43,16 @@ def setup_logging(verbose: bool) -> logging.Logger:
     root.setLevel(level)
 
     fmt = logging.Formatter("%(asctime)s | %(levelname)-7s | %(message)s", datefmt="%H:%M:%S")
-    stream_handler = _SafeStreamHandler(sys.stdout)
-    stream_handler.setFormatter(fmt)
-    root.addHandler(stream_handler)
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler(REPORTS_DIR / "run.log", encoding="utf-8")
     file_handler.setFormatter(fmt)
     root.addHandler(file_handler)
 
-    # не даём urllib3/requests шуметь на уровне INFO
+    console = _PrintHandler()
+    console.setFormatter(fmt)
+    root.addHandler(console)
+
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
     return logging.getLogger("ncins200")

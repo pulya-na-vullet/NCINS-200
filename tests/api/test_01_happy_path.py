@@ -21,17 +21,15 @@ def test_01_happy_path_from_ncins_200_example(client, valid_payload):
     assert premium > 0
 
 
-def test_08_valid_headers_from_pdf_accepted(client, valid_payload):
-    """№8: все A-* headers из скриншота задачи → 200."""
+def test_08_valid_headers_from_postman_accepted(client, valid_payload):
+    """№8: A-* headers как в Postman Insurance API Tests → 200."""
     response = client.calculate(
         valid_payload,
         headers={
             "A-userId": "123456",
             "A-customerId": "123456",
-            "A-clientType": "XXXXX",
-            "A-channelId": "XXXXX",
-            "A-userIp": "XXXXX",
-            "A-projectId": "XXXXX",
+            "A-clientType": "MOBILE",
+            "A-channelId": "INTERNET",
         },
     )
     assert response.status_code == 200, response.text

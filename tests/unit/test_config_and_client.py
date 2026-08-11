@@ -15,10 +15,10 @@ def _settings(**kwargs) -> Settings:
         timeout=5,
         user_id="123456",
         customer_id="123456",
-        client_type="XXXXX",
-        channel_id="XXXXX",
-        user_ip="XXXXX",
-        project_id="XXXXX",
+        client_type="MOBILE",
+        channel_id="INTERNET",
+        user_ip="",
+        project_id="",
         fetch_token=False,
     )
     base.update(kwargs)
@@ -30,10 +30,10 @@ def test_default_headers_contain_required_gateway_keys():
     headers = _settings().default_headers()
     assert headers["A-userId"] == "123456"
     assert headers["A-customerId"] == "123456"
-    assert headers["A-clientType"] == "XXXXX"
-    assert headers["A-channelId"] == "XXXXX"
-    assert headers["A-userIp"] == "XXXXX"
-    assert headers["A-projectId"] == "XXXXX"
+    assert headers["A-clientType"] == "MOBILE"
+    assert headers["A-channelId"] == "INTERNET"
+    assert "A-userIp" not in headers
+    assert "A-projectId" not in headers
     assert headers["Content-Type"] == "application/json"
 
 

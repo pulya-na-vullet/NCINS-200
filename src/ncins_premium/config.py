@@ -7,31 +7,32 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Keycloak UMP (НИБ) — client_credentials для обхода RBAC на gateway
+# Auth из Postman-коллекции "Insurance API Tests"
+# (realm corporate через mks-gateway) — НЕ UMP Keycloak.
 KEYCLOAK_PROFILES: dict[str, dict[str, str]] = {
-    "dev": {
-        "token_url": (
-            "https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/"
-            "realms/ump/protocol/openid-connect/token"
-        ),
-        "client_id": "nib-corp-ncins",
-        "client_secret": "OlcnSVnz3UiORtl4XfJZ3NRRZlqw7QPY",
-    },
-    "qa": {
-        "token_url": (
-            "https://keycloak.umpqak8sm1.moscow.alfaintra.net/"
-            "realms/ump/protocol/openid-connect/token"
-        ),
-        "client_id": "nib-corp-ncins",
-        "client_secret": "DRcjLK7ZeFSy4P0A7fPuZrD1ppXccxd0",
-    },
     "test": {
         "token_url": (
-            "https://idp-api-test.alfaintra.net/"
-            "auth/realms/ump/protocol/openid-connect/token"
+            "http://corp-gateway-test.moscow.alfaintra.net/"
+            "mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token"
         ),
-        "client_id": "nib-corp-ncins",
-        "client_secret": "wcpWehuLXKRWwMYE17EXvg9ShCQ7Rovc",
+        "client_id": "nib-corp-ncinsurance-accounting",
+        "client_secret": "nib_corp_ncinsurance_accounting",
+        "base_url": (
+            "http://corp-gateway-test.moscow.alfaintra.net/"
+            "corp-ncins-acc-gateway/secure/corp-ncins-acc-corp-ncins-acc-api"
+        ),
+    },
+    "dev": {
+        "token_url": (
+            "http://corp-gateway-dev.moscow.alfaintra.net/"
+            "mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token"
+        ),
+        "client_id": "nib-corp-ncinsurance-accounting",
+        "client_secret": "nib_corp_ncinsurance_accounting",
+        "base_url": (
+            "http://corp-gateway-dev.moscow.alfaintra.net/"
+            "corp-ncins-acc-gateway/secure/corp-ncins-acc-corp-ncins-acc-api"
+        ),
     },
 }
 
@@ -51,7 +52,7 @@ class Settings:
     keycloak_client_id: str = ""
     keycloak_client_secret: str = ""
     keycloak_verify_ssl: bool = False
-    authorization: str | None = None  # готовый Bearer, если задан вручную
+    authorization: str | None = None
     fetch_token: bool = True
 
     @property
@@ -62,13 +63,17 @@ class Settings:
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+            # как в collection pre-request
             "A-userId": self.user_id,
             "A-customerId": self.customer_id,
             "A-clientType": self.client_type,
             "A-channelId": self.channel_id,
-            "A-userIp": self.user_ip,
-            "A-projectId": self.project_id,
         }
+        # опциональные headers из NCINS-200 скрина (в Postman их нет)
+        if self.user_ip:
+            headers["A-userIp"] = self.user_ip
+        if self.project_id:
+            headers["A-projectId"] = self.project_id
         if self.authorization:
             headers["Authorization"] = self.authorization
         return headers
@@ -87,18 +92,16 @@ def get_settings() -> Settings:
     }
 
     return Settings(
-        base_url=os.getenv(
-            "BASE_URL",
-            "http://corp-gateway-test.moscow.alfaintra.net/"
-            "corp-ncins-acc-gateway/secure/corp-ncins-acc-corp-ncins-acc-api",
-        ),
+        base_url=os.getenv("BASE_URL", profile["base_url"]),
         timeout=float(os.getenv("REQUEST_TIMEOUT", "30")),
+        # значения из collection variables Postman
         user_id=os.getenv("A_USER_ID", "123456"),
         customer_id=os.getenv("A_CUSTOMER_ID", "123456"),
-        client_type=os.getenv("A_CLIENT_TYPE", "XXXXX"),
-        channel_id=os.getenv("A_CHANNEL_ID", "XXXXX"),
-        user_ip=os.getenv("A_USER_IP", "XXXXX"),
-        project_id=os.getenv("A_PROJECT_ID", "XXXXX"),
+        client_type=os.getenv("A_CLIENT_TYPE", "MOBILE"),
+        channel_id=os.getenv("A_CHANNEL_ID", "INTERNET"),
+        # в Postman этих headers нет — по умолчанию пусто (не отправляем)
+        user_ip=os.getenv("A_USER_IP", ""),
+        project_id=os.getenv("A_PROJECT_ID", ""),
         environment=env,
         keycloak_token_url=os.getenv("KEYCLOAK_TOKEN_URL", profile["token_url"]),
         keycloak_client_id=os.getenv("KEYCLOAK_CLIENT_ID", profile["client_id"]),

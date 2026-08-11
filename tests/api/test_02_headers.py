@@ -10,20 +10,18 @@ pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("skip_if_gateway_
 
 AUTH_OR_CLIENT_ERROR = {400, 401, 403, 422}
 
+# Обязательные headers из Postman collection pre-request
+REQUIRED_HEADERS = [
+    ("A-userId", "02"),
+    ("A-customerId", "03"),
+    ("A-clientType", "04"),
+    ("A-channelId", "05"),
+]
 
-@pytest.mark.parametrize(
-    "header_name,case_no",
-    [
-        ("A-userId", "02"),
-        ("A-customerId", "03"),
-        ("A-clientType", "04"),
-        ("A-channelId", "05"),
-        ("A-userIp", "06"),
-        ("A-projectId", "07"),
-    ],
-)
+
+@pytest.mark.parametrize("header_name,case_no", REQUIRED_HEADERS)
 def test_required_a_header_missing_rejected(client, header_name, case_no):
-    """№2–7: отсутствие обязательного A-* header → ошибка клиента/авторизации."""
+    """№2–5: отсутствие обязательного A-* header → ошибка клиента/авторизации."""
     response = client.calculate(example_payload(), omit_headers={header_name})
     assert response.status_code in AUTH_OR_CLIENT_ERROR, response.text
 

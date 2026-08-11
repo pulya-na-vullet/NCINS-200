@@ -29,8 +29,20 @@ python app.py --skip-if-offline   # skip API, если gateway недоступ�
 
 Нужен доступ к test-gateway (корп VPN).
 
-Для обхода `403 RBAC: access denied` клиент сам берёт токен Keycloak UMP
-(`client_credentials`, client_id=`nib-corp-ncins`) по профилю `ENV=test|qa|dev`.
+Токен берётся **как в Postman-коллекции** `Insurance API Tests`:
+
+```
+POST {{tokenUrl}}
+grant_type=client_credentials
+client_id=nib-corp-ncinsurance-accounting
+client_secret=nib_corp_ncinsurance_accounting
+```
+
+TEST `tokenUrl`:
+`http://corp-gateway-test.../mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token`
+
+Issuer в JWT: `http://keycloak-nib-int/realms/corporate`  
+(не UMP `idp-api-test.../realms/ump` — из‑за него был `Jwt issuer is not configured`).
 
 ```bash
 # .env
@@ -38,5 +50,4 @@ ENV=test
 FETCH_KEYCLOAK_TOKEN=1
 ```
 
-Если после токена всё ещё 403 — у клиента в Keycloak нет права на
-`/v1/ins-premium/calculate` (в UMP часто выданы только `POST /applications`).
+Коллекция лежит в `postman/`.

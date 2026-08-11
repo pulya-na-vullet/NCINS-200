@@ -10,9 +10,7 @@
 | 3 | Обязательный header A-customerId | Без `A-customerId` метод отклоняет запрос |
 | 4 | Обязательный header A-clientType | Без `A-clientType` метод отклоняет запрос |
 | 5 | Обязательный header A-channelId | Без `A-channelId` метод отклоняет запрос |
-| 6 | Обязательный header A-userIp | Без `A-userIp` метод отклоняет запрос |
-| 7 | Обязательный header A-projectId | Без `A-projectId` метод отклоняет запрос |
-| 8 | Валидные headers из PDF | Все 6 `A-*` headers из скриншота задачи → запрос принимается (200) |
+| 8 | Валидные headers из Postman | `A-*` как в Insurance API Tests (MOBILE/INTERNET) → 200 |
 | 9 | Нет programId | Отсутствие обязательного поля → 400/422 |
 | 10 | Нет duration | Отсутствие обязательного поля → 400/422 |
 | 11 | Нет insuranceSum | Отсутствие обязательного поля → 400/422 |

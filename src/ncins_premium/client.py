@@ -100,9 +100,12 @@ class InsPremiumClient:
         body_preview = (response.text or "")[:500]
         if body_preview:
             log.info("Response body (preview): %s", body_preview)
-        if response.status_code == 403 and "RBAC" in (response.text or ""):
+        body = response.text or ""
+        if response.status_code == 401 and "Jwt issuer" in body:
             log.error(
-                "RBAC 403: проверьте ENV/Keycloak client и что у nib-corp-ncins есть доступ "
-                "к методу calculate (сейчас в UMP часто выданы только /applications)."
+                "401 Jwt issuer: нужен token из mks-gateway / realms/corporate "
+                "(client nib-corp-ncinsurance-accounting), не UMP Keycloak."
             )
+        if response.status_code == 403 and "RBAC" in body:
+            log.error("RBAC 403: у клиента нет права на этот метод.")
         return response
