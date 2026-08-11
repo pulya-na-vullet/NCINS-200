@@ -11,3 +11,4 @@ build/
 reports/
 dist/
 index.html
+*.log

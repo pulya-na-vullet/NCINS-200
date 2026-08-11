@@ -1,296 +1,211 @@
 #!/usr/bin/env python3
-"""NCINS-200 — упаковка проекта и локальная ссылка на скачивание.
+"""NCINS-200 — прогон метода расчёта страховой премии через requests + pytest.
 
 Usage:
     python app.py
-    python app.py --test --unit
-    python app.py --port 0
+    python app.py --unit
+    python app.py -v
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import shutil
-import subprocess
+import logging
+import os
 import sys
-import webbrowser
-import zipfile
 from datetime import datetime, timezone
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import quote
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent
-DIST_DIR = ROOT / "dist"
+REPORTS_DIR = ROOT / "reports"
 ARTIFACTS_DIR = Path("/opt/cursor/artifacts")
-DEFAULT_PORT = 0
-
-# What not to put into the project archive
-EXCLUDE_DIR_NAMES = {
-    ".git",
-    ".venv",
-    "venv",
-    "__pycache__",
-    ".pytest_cache",
-    "reports",
-    "dist",
-    ".idea",
-    ".vscode",
-    "node_modules",
-}
-EXCLUDE_FILE_NAMES = {
-    ".env",
-    "index.html",
-}
-EXCLUDE_SUFFIXES = {".pyc", ".pyo"}
-
-GITHUB_BRANCH_ZIP = (
-    "https://github.com/pulya-na-vullet/NCINS-200/archive/refs/heads/"
-    "cursor/ncins-200-ins-premium-tests-0f4d.zip"
-)
-GITHUB_MAIN_ZIP = "https://github.com/pulya-na-vullet/NCINS-200/archive/refs/heads/main.zip"
+CHECKLIST = ROOT / "CHECKLIST.md"
+JUNIT_XML = REPORTS_DIR / "junit.xml"
+TEXT_REPORT = REPORTS_DIR / "report.txt"
 
 
-def _ensure_dirs() -> None:
-    DIST_DIR.mkdir(parents=True, exist_ok=True)
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def _timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-
-
-def public_host(host: str) -> str:
-    return "127.0.0.1" if host in {"0.0.0.0", "::"} else host
-
-
-def _should_skip(path: Path) -> bool:
-    rel_parts = path.relative_to(ROOT).parts
-    if any(part in EXCLUDE_DIR_NAMES for part in rel_parts):
-        return True
-    if path.name in EXCLUDE_FILE_NAMES:
-        return True
-    if path.suffix in EXCLUDE_SUFFIXES:
-        return True
-    return False
-
-
-def build_project_zip() -> Path:
-    """Pack the whole runnable project (with app.py) into a ZIP."""
-    _ensure_dirs()
-    stamp = _timestamp()
-    zip_name = f"NCINS-200_project_{stamp}.zip"
-    zip_path = DIST_DIR / zip_name
-    latest = DIST_DIR / "NCINS-200_project_latest.zip"
-    root_prefix = "NCINS-200"
-
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(ROOT.rglob("*")):
-            if not path.is_file() or _should_skip(path):
-                continue
-            arcname = f"{root_prefix}/{path.relative_to(ROOT).as_posix()}"
-            archive.write(path, arcname=arcname)
-
-        readme_run = (
-            "NCINS-200\n"
-            "=========\n\n"
-            "1) pip install -r requirements.txt\n"
-            "2) cp .env.example .env   # укажите BASE_URL и A-* headers из корп-сети\n"
-            "3) python app.py          # соберёт ZIP проекта и поднимет ссылку на скачивание\n"
-            "4) python app.py --test --unit\n"
-            "5) python app.py --test --integration   # нужен корп VPN / доступ к gateway\n"
-        )
-        archive.writestr(f"{root_prefix}/HOW_TO_RUN.txt", readme_run)
-
-    shutil.copyfile(zip_path, latest)
-    shutil.copyfile(zip_path, ARTIFACTS_DIR / zip_name)
-    shutil.copyfile(latest, ARTIFACTS_DIR / "NCINS-200_project_latest.zip")
-
-    meta = {
-        "task": "NCINS-200",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "project_zip": zip_name,
-        "how_to_run": ["pip install -r requirements.txt", "python app.py"],
-        "github_branch_zip": GITHUB_BRANCH_ZIP,
-        "note": "Integration API tests require corporate VPN / internal gateway access.",
-    }
-    (DIST_DIR / "project_meta.json").write_text(
-        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+def setup_logging(verbose: bool) -> logging.Logger:
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s | %(levelname)-7s | %(message)s",
+        datefmt="%H:%M:%S",
+        stream=sys.stdout,
+        force=True,
     )
-    shutil.copyfile(DIST_DIR / "project_meta.json", ARTIFACTS_DIR / "NCINS-200_project_meta.json")
-    return latest
-
-
-def run_tests(marker: str | None) -> int:
-    cmd = [sys.executable, "-m", "pytest", "-v"]
-    if marker:
-        cmd.extend(["-m", marker])
-    print("Запуск тестов:", flush=True)
-    print(" ", " ".join(cmd), flush=True)
-    print(flush=True)
-    return subprocess.run(cmd, cwd=ROOT).returncode
-
-
-class QuietHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
-
-    def log_message(self, format: str, *args) -> None:  # noqa: A003
-        sys.stdout.write("%s - %s\n" % (self.address_string(), format % args))
-
-
-def create_server(host: str, port: int) -> tuple[ThreadingHTTPServer, int]:
-    requested = port if port and port > 0 else 0
-    server = ThreadingHTTPServer((host, requested), QuietHandler)
-    return server, int(server.server_address[1])
-
-
-def write_index_page(project_zip: Path, host: str, port: int) -> Path:
-    shown = public_host(host)
-    local_url = f"http://{shown}:{port}/dist/{quote(project_zip.name)}"
-    index = DIST_DIR / "index.html"
-    index.write_text(
-        f"""<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8"/>
-  <title>NCINS-200 — скачать проект</title>
-  <style>
-    body {{ font-family: Georgia, "Times New Roman", serif; margin: 40px; background: linear-gradient(160deg,#e7f0ea,#f7f3ec); color: #14201a; }}
-    .box {{ max-width: 760px; background: rgba(255,255,255,.92); border: 1px solid #c9d5ce; padding: 28px 32px; }}
-    h1 {{ margin-top: 0; }}
-    a.btn {{ display: inline-block; margin: 8px 12px 8px 0; padding: 12px 18px; background: #0f5c45; color: #fff; text-decoration: none; }}
-    a.btn.secondary {{ background: #2c3e36; }}
-    code {{ background: #eef2ef; padding: 2px 6px; }}
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>NCINS-200 — весь проект</h1>
-    <p>В архиве есть <code>app.py</code>, тесты, клиент API и <code>requirements.txt</code>.</p>
-    <p>После распаковки:</p>
-    <pre>pip install -r requirements.txt
-cp .env.example .env
-python app.py</pre>
-    <p>
-      <a class="btn" href="/dist/{quote(project_zip.name)}">Скачать проект (ZIP)</a>
-      <a class="btn secondary" href="{GITHUB_BRANCH_ZIP}">Скачать с GitHub</a>
-    </p>
-    <p>Локальная ссылка: <a href="{local_url}">{local_url}</a></p>
-    <p>GitHub: <a href="{GITHUB_BRANCH_ZIP}">{GITHUB_BRANCH_ZIP}</a></p>
-  </div>
-</body>
-</html>
-""",
-        encoding="utf-8",
-    )
-    (ROOT / "index.html").write_text(
-        '<meta http-equiv="refresh" content="0; url=/dist/index.html"/>',
-        encoding="utf-8",
-    )
-    return index
-
-
-def serve(server: ThreadingHTTPServer, host: str, port: int, open_browser: bool) -> None:
-    shown = public_host(host)
-    download = f"http://{shown}:{port}/dist/NCINS-200_project_latest.zip"
-    page = f"http://{shown}:{port}/dist/index.html"
-    print()
-    print("=" * 64)
-    print("Сервер скачивания проекта запущен")
-    print(f"Порт:                       {port}")
-    print(f"Страница:                   {page}")
-    print(f"Скачать проект:             {download}")
-    print(f"Скачать с GitHub:           {GITHUB_BRANCH_ZIP}")
-    print("=" * 64)
-    print("Остановка: Ctrl+C")
-    print()
-    if open_browser:
-        try:
-            webbrowser.open(page)
-        except Exception:
-            pass
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nОстановлено.")
-        server.server_close()
+    return logging.getLogger("ncins200")
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="NCINS-200: упаковать проект и выдать ссылку на скачивание"
+    p = argparse.ArgumentParser(description="NCINS-200: прогон API-метода calculate через pytest+requests")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--api", action="store_true", default=True, help="API-тесты метода (по умолчанию)")
+    g.add_argument("--unit", action="store_true", help="Только unit-тесты без сети")
+    g.add_argument("--all", action="store_true", help="unit + api")
+    p.add_argument("-v", "--verbose", action="store_true", help="Подробный лог")
+    p.add_argument(
+        "--skip-if-offline",
+        action="store_true",
+        help="Пропускать API-тесты, если gateway недоступен (по умолчанию НЕ пропускаем — падаем с ошибкой сети)",
     )
-    parser.add_argument("--host", default="127.0.0.1", help="Host HTTP-сервера")
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=DEFAULT_PORT,
-        help="Порт (0 = случайный свободный)",
-    )
-    parser.add_argument("--no-serve", action="store_true", help="Только собрать ZIP, без HTTP")
-    parser.add_argument("--no-browser", action="store_true", help="Не открывать браузер")
-    parser.add_argument("--test", action="store_true", help="Дополнительно прогнать pytest")
-    test_group = parser.add_mutually_exclusive_group()
-    test_group.add_argument("--unit", action="store_true", help="С --test: только unit")
-    test_group.add_argument("--integration", action="store_true", help="С --test: только integration (нужен VPN)")
-    test_group.add_argument("--all-tests", action="store_true", help="С --test: все тесты")
-    return parser.parse_args()
+    return p.parse_args()
+
+
+class ReportPlugin:
+    """Собирает результаты и пишет текстовый отчёт = CHECKLIST + статусы."""
+
+    def __init__(self, log: logging.Logger):
+        self.log = log
+        self.rows: list[tuple[str, str, str]] = []  # nodeid, outcome, reason
+
+    def pytest_runtest_logreport(self, report):
+        if report.when != "call" and not (report.when == "setup" and report.failed):
+            return
+        if report.when == "setup" and report.skipped:
+            outcome = "SKIPPED"
+            reason = str(report.longrepr) if report.longrepr else ""
+        elif report.skipped:
+            outcome = "SKIPPED"
+            reason = str(report.longrepr) if report.longrepr else ""
+        elif report.failed:
+            outcome = "FAILED"
+            reason = str(report.longrepr) if report.longrepr else ""
+        elif report.passed and report.when == "call":
+            outcome = "PASSED"
+            reason = ""
+        else:
+            return
+
+        short = report.nodeid.split("::")[-1]
+        reason = self._short_reason(reason)
+        self.rows.append((short, outcome, reason))
+        level = {
+            "PASSED": logging.INFO,
+            "FAILED": logging.ERROR,
+            "SKIPPED": logging.WARNING,
+        }[outcome]
+        self.log.log(level, "[%s] %s", outcome, short)
+        if reason and outcome != "PASSED":
+            self.log.log(level, "  └─ %s", reason[:300])
+
+    @staticmethod
+    def _short_reason(reason: str) -> str:
+        text = (reason or "").strip()
+        if not text:
+            return ""
+        lower = text.lower()
+        if "nameresolutionerror" in lower or "failed to resolve" in lower or "name resolution" in lower:
+            return "Нет доступа к corp-gateway-test (DNS/VPN). Нужен корп VPN."
+        if "connectionerror" in lower or "connect timeout" in lower or "timed out" in lower:
+            return "Нет соединения с gateway (сеть/VPN/timeout)."
+        # берём последнюю строку с исключением — обычно самая полезная
+        for line in reversed(text.splitlines()):
+            s = line.strip()
+            if s.startswith("E ") or "Error" in s or "assert" in s:
+                return s[:400]
+        return text.splitlines()[0][:400]
+
+    def write_text_report(self, exit_code: int) -> Path:
+        REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+        checklist = CHECKLIST.read_text(encoding="utf-8") if CHECKLIST.exists() else ""
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        lines = [
+            "NCINS-200 — отчёт прогона метода POST /v1/ins-premium/calculate",
+            f"Время: {now}",
+            f"Exit code: {exit_code}",
+            f"Команда: python app.py",
+            "",
+            "=" * 72,
+            "ЧЕК-ЛИСТ ПРОВЕРОК (из задачи / PDF)",
+            "=" * 72,
+            "",
+            checklist.strip(),
+            "",
+            "=" * 72,
+            "РЕЗУЛЬТАТЫ ПРОГОНА",
+            "=" * 72,
+            "",
+        ]
+        if not self.rows:
+            lines.append("Тесты не запускались / результатов нет.")
+        for i, (name, outcome, reason) in enumerate(self.rows, 1):
+            lines.append(f"{i}. [{outcome}] {name}")
+            if reason and outcome != "PASSED":
+                for rl in reason.strip().splitlines()[:8]:
+                    lines.append(f"    {rl}")
+            lines.append("")
+
+        passed = sum(1 for _, o, _ in self.rows if o == "PASSED")
+        failed = sum(1 for _, o, _ in self.rows if o == "FAILED")
+        skipped = sum(1 for _, o, _ in self.rows if o == "SKIPPED")
+        lines.extend(
+            [
+                "-" * 72,
+                f"Итого: PASSED={passed} FAILED={failed} SKIPPED={skipped} TOTAL={len(self.rows)}",
+                "-" * 72,
+                "",
+            ]
+        )
+        text = "\n".join(lines)
+        TEXT_REPORT.write_text(text, encoding="utf-8")
+        artifact = ARTIFACTS_DIR / "ncins200_report.txt"
+        artifact.write_text(text, encoding="utf-8")
+        return TEXT_REPORT
 
 
 def main() -> int:
     args = parse_args()
+    log = setup_logging(args.verbose)
 
-    project_zip = build_project_zip()
-    print(f"Проект упакован: {project_zip}", flush=True)
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    exit_code = 0
-    if args.test:
-        marker = None
-        if args.unit:
-            marker = "unit"
-        elif args.integration:
-            marker = "integration"
-        exit_code = run_tests(marker)
-
-    server: ThreadingHTTPServer | None = None
-    port = 0
-    if not args.no_serve:
-        server, port = create_server(args.host, args.port)
-        write_index_page(project_zip, args.host, port)
+    # API-тесты по умолчанию реально бьют в метод через requests
+    if args.unit:
+        marker = "unit"
+        log.info("Режим: unit (без вызова API)")
+    elif args.all:
+        marker = "unit or integration"
+        log.info("Режим: unit + api")
     else:
-        write_index_page(project_zip, args.host, 0)
+        marker = "integration"
+        log.info("Режим: API-метод calculate через requests + pytest")
 
-    shown = public_host(args.host)
-    local_download = (
-        f"http://{shown}:{port}/dist/NCINS-200_project_latest.zip" if port else str(project_zip)
-    )
+    if args.skip_if_offline:
+        os.environ["SKIP_IF_OFFLINE"] = "1"
+        log.info("SKIP_IF_OFFLINE=1 — при недоступном gateway тесты будут skipped")
+    else:
+        os.environ.pop("SKIP_IF_OFFLINE", None)
+        os.environ["FORCE_INTEGRATION"] = "1"
+        log.info("FORCE_INTEGRATION=1 — API-тесты не пропускаются из-за offline")
 
-    print()
-    print("Готово.")
-    print(f"ZIP проекта:               {project_zip}")
-    print(f"Артефакт:                  {ARTIFACTS_DIR / 'NCINS-200_project_latest.zip'}")
-    print(f"Скачать проект (локально): {local_download}")
-    print(f"Скачать проект (GitHub):   {GITHUB_BRANCH_ZIP}")
-    print()
+    log.info("BASE_URL / endpoint берутся из .env или defaults в config.py")
+    log.info("Чек-лист проверок: %s", CHECKLIST)
+    log.info("Старт pytest...")
 
-    (DIST_DIR / "download_url.txt").write_text(
-        f"{local_download}\n{GITHUB_BRANCH_ZIP}\n",
-        encoding="utf-8",
-    )
-    (ARTIFACTS_DIR / "NCINS-200_download_url.txt").write_text(
-        f"{local_download}\n{GITHUB_BRANCH_ZIP}\n",
-        encoding="utf-8",
-    )
-    if port:
-        (DIST_DIR / "server_port.txt").write_text(str(port), encoding="utf-8")
+    plugin = ReportPlugin(log)
+    pytest_args = [
+        "-v",
+        "--tb=short",
+        "-m",
+        marker,
+        f"--junitxml={JUNIT_XML}",
+        str(ROOT / "tests"),
+    ]
+    if args.verbose:
+        pytest_args.append("-vv")
 
-    if args.no_serve or server is None:
-        return exit_code
+    exit_code = pytest.main(pytest_args, plugins=[plugin])
+    report_path = plugin.write_text_report(exit_code)
 
-    serve(server, args.host, port, open_browser=not args.no_browser)
-    return exit_code
+    log.info("Готово. exit_code=%s", exit_code)
+    log.info("Текстовый отчёт: %s", report_path)
+    log.info("Артефакт: %s", ARTIFACTS_DIR / "ncins200_report.txt")
+    log.info("JUnit XML: %s", JUNIT_XML)
+    return int(exit_code)
 
 
 if __name__ == "__main__":

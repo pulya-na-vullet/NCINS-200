@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import requests
 
 from ncins_premium.config import Settings, get_settings
+
+log = logging.getLogger("ncins200.client")
 
 
 class InsPremiumClient:
@@ -28,9 +31,19 @@ class InsPremiumClient:
             for key in omit_headers:
                 request_headers.pop(key, None)
 
-        return self.session.post(
+        log.info("POST %s", self.settings.calculate_url)
+        log.info("Headers: %s", sorted(request_headers.keys()))
+        log.info("Body: %s", payload)
+
+        response = self.session.post(
             self.settings.calculate_url,
             json=payload,
             headers=request_headers,
             timeout=self.settings.timeout,
         )
+
+        log.info("Response: status=%s content-type=%s", response.status_code, response.headers.get("Content-Type"))
+        body_preview = (response.text or "")[:500]
+        if body_preview:
+            log.info("Response body (preview): %s", body_preview)
+        return response

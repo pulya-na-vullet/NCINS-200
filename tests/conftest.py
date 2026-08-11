@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import socket
 from urllib.parse import urlparse
@@ -10,6 +11,8 @@ import requests
 from ncins_premium.client import InsPremiumClient
 from ncins_premium.config import get_settings
 from ncins_premium.payloads import example_payload
+
+log = logging.getLogger("ncins200.tests")
 
 
 def _host_reachable(url: str, timeout: float = 2.0) -> bool:
@@ -27,12 +30,16 @@ def _host_reachable(url: str, timeout: float = 2.0) -> bool:
 
 @pytest.fixture(scope="session")
 def settings():
-    return get_settings()
+    s = get_settings()
+    log.info("API endpoint: %s", s.calculate_url)
+    return s
 
 
 @pytest.fixture(scope="session")
 def gateway_available(settings) -> bool:
-    return _host_reachable(settings.base_url)
+    ok = _host_reachable(settings.base_url)
+    log.info("Gateway reachable: %s (%s)", ok, settings.base_url)
+    return ok
 
 
 @pytest.fixture
@@ -47,13 +54,28 @@ def valid_payload() -> dict:
 
 @pytest.fixture
 def skip_if_gateway_unavailable(gateway_available):
-    if not gateway_available and os.getenv("FORCE_INTEGRATION") != "1":
-        pytest.skip(
-            "Test gateway is not reachable from this environment. "
-            "Set FORCE_INTEGRATION=1 to force-run integration tests."
-        )
+    """По умолчанию API-тесты НЕ skip (FORCE_INTEGRATION из app.py).
+    Skip только если явно SKIP_IF_OFFLINE=1 и gateway недоступен.
+    """
+    if gateway_available:
+        return
+    if os.getenv("SKIP_IF_OFFLINE") == "1" and os.getenv("FORCE_INTEGRATION") != "1":
+        pytest.skip("Gateway недоступен и включён SKIP_IF_OFFLINE=1")
+    # иначе идём в тест — requests упадёт с понятной сетевой ошибкой
 
 
 @pytest.fixture
 def http_session() -> requests.Session:
     return requests.Session()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    log.info(">>> START %s", item.nodeid)
+    yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    yield
+    log.info("<<< END   %s", item.nodeid)
