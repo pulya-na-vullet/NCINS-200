@@ -52,44 +52,28 @@ cp .env.example .env
 # при необходимости поправьте значения headers / BASE_URL в .env
 ```
 
+## Скачать весь проект
+
+https://github.com/pulya-na-vullet/NCINS-200/archive/refs/heads/cursor/ncins-200-ins-premium-tests-0f4d.zip
+
 ## Запуск
 
-Основной способ:
-
 ```bash
+pip install -r requirements.txt
+cp .env.example .env
 python app.py
 ```
 
-Скрипт:
-1. прогоняет проверки;
-2. собирает ZIP с HTML/JUnit отчётом;
-3. поднимает локальный сервер и печатает **ссылку на скачивание**.
-
-Полезные опции:
+`python app.py` упаковывает **весь проект** (с `app.py`) в ZIP и поднимает локальный сервер на случайном порту со ссылкой на скачивание.
 
 ```bash
-python app.py --unit
-python app.py --integration
-python app.py --port 0            # случайный свободный порт (по умолчанию)
-python app.py --port 8080         # фиксированный порт
-python app.py --no-serve          # только отчёт, без HTTP-сервера
+python app.py --no-serve                 # только собрать ZIP проекта
+python app.py --test --unit              # unit-тесты без VPN
+python app.py --test --integration       # API-тесты, нужен корп VPN
+python app.py --port 8080
 ```
 
-После запуска порт выбирается случайно; точная ссылка печатается в консоль, например:
-
-```
-http://127.0.0.1:<random-port>/reports/ncins200_test_results_latest.zip
-http://127.0.0.1:<random-port>/reports/index.html
-```
-
-Альтернативно через pytest:
-
-```bash
-pytest -m unit
-pytest
-pytest -m integration
-FORCE_INTEGRATION=1 pytest -m integration
-```
+Integration к `corp-gateway-test...` без корпоративного VPN не выполнится (skip).
 
 ## Что покрыто
 
