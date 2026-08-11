@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
-import socket
 import subprocess
 import sys
 import webbrowser
