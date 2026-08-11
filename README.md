@@ -54,27 +54,44 @@ cp .env.example .env
 
 ## Запуск
 
-Только unit-проверки (без сети):
+Основной способ:
+
+```bash
+python app.py
+```
+
+Скрипт:
+1. прогоняет проверки;
+2. собирает ZIP с HTML/JUnit отчётом;
+3. поднимает локальный сервер и печатает **ссылку на скачивание**.
+
+Полезные опции:
+
+```bash
+python app.py --unit
+python app.py --integration
+python app.py --port 8080
+python app.py --no-serve          # только отчёт, без HTTP-сервера
+```
+
+После запуска ссылка на скачивание:
+
+```
+http://127.0.0.1:8080/reports/ncins200_test_results_latest.zip
+```
+
+Страница отчёта:
+
+```
+http://127.0.0.1:8080/reports/index.html
+```
+
+Альтернативно через pytest:
 
 ```bash
 pytest -m unit
-```
-
-Все тесты (integration автоматически skip, если gateway недоступен):
-
-```bash
 pytest
-```
-
-Только интеграционные проверки против тест-контура:
-
-```bash
 pytest -m integration
-```
-
-Принудительный запуск integration даже если host не пингуется:
-
-```bash
 FORCE_INTEGRATION=1 pytest -m integration
 ```
 
