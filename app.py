@@ -26,15 +26,38 @@ JUNIT_XML = REPORTS_DIR / "junit.xml"
 TEXT_REPORT = REPORTS_DIR / "report.txt"
 
 
+class _SafeStreamHandler(logging.StreamHandler):
+    """Windows-friendly handler: не падает на WinError 6 (неверный дескриптор)."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            super().emit(record)
+        except OSError:
+            try:
+                sys.__stdout__.write(self.format(record) + "\n")
+            except Exception:
+                pass
+
+
 def setup_logging(verbose: bool) -> logging.Logger:
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s | %(levelname)-7s | %(message)s",
-        datefmt="%H:%M:%S",
-        stream=sys.stdout,
-        force=True,
-    )
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.setLevel(level)
+
+    fmt = logging.Formatter("%(asctime)s | %(levelname)-7s | %(message)s", datefmt="%H:%M:%S")
+    stream_handler = _SafeStreamHandler(sys.stdout)
+    stream_handler.setFormatter(fmt)
+    root.addHandler(stream_handler)
+
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(REPORTS_DIR / "run.log", encoding="utf-8")
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
+
+    # не даём urllib3/requests шуметь на уровне INFO
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
     return logging.getLogger("ncins200")
 
 
@@ -183,6 +206,7 @@ def main() -> int:
         log.info("FORCE_INTEGRATION=1 — API-тесты не пропускаются из-за offline")
 
     log.info("BASE_URL / endpoint берутся из .env или defaults в config.py")
+    log.info("ENV/Keycloak: %s (FETCH_KEYCLOAK_TOKEN)", os.getenv("ENV") or os.getenv("KEYCLOAK_ENV") or "test")
     log.info("Чек-лист проверок: %s", CHECKLIST)
     log.info("Старт pytest...")
 

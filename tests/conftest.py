@@ -32,6 +32,12 @@ def _host_reachable(url: str, timeout: float = 2.0) -> bool:
 def settings():
     s = get_settings()
     log.info("API endpoint: %s", s.calculate_url)
+    log.info(
+        "Keycloak: env=%s fetch_token=%s token_url=%s",
+        s.environment,
+        s.fetch_token,
+        s.keycloak_token_url,
+    )
     return s
 
 

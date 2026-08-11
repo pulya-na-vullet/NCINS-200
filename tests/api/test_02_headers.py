@@ -32,7 +32,7 @@ def test_27_get_method_not_allowed(client, settings):
     """№27: GET на URL calculate недопустим → 404/405."""
     response = client.session.get(
         settings.calculate_url,
-        headers=settings.default_headers(),
+        headers=client.headers(),
         timeout=settings.timeout,
     )
     assert response.status_code in {404, 405}, response.text
@@ -40,8 +40,7 @@ def test_27_get_method_not_allowed(client, settings):
 
 def test_28_wrong_content_type_rejected(client, settings):
     """№28: неверный Content-Type → 400/415/422."""
-    headers = settings.default_headers()
-    headers["Content-Type"] = "text/plain"
+    headers = client.headers(extra={"Content-Type": "text/plain"})
     response = client.session.post(
         settings.calculate_url,
         data='{"programId":3}',

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -9,9 +9,8 @@ from ncins_premium.config import Settings
 from ncins_premium.payloads import example_payload
 
 
-@pytest.mark.unit
-def test_default_headers_contain_required_gateway_keys():
-    settings = Settings(
+def _settings(**kwargs) -> Settings:
+    base = dict(
         base_url="http://example.test/api",
         timeout=5,
         user_id="123456",
@@ -20,8 +19,15 @@ def test_default_headers_contain_required_gateway_keys():
         channel_id="XXXXX",
         user_ip="XXXXX",
         project_id="XXXXX",
+        fetch_token=False,
     )
-    headers = settings.default_headers()
+    base.update(kwargs)
+    return Settings(**base)
+
+
+@pytest.mark.unit
+def test_default_headers_contain_required_gateway_keys():
+    headers = _settings().default_headers()
     assert headers["A-userId"] == "123456"
     assert headers["A-customerId"] == "123456"
     assert headers["A-clientType"] == "XXXXX"
@@ -33,31 +39,13 @@ def test_default_headers_contain_required_gateway_keys():
 
 @pytest.mark.unit
 def test_calculate_url_built_correctly():
-    settings = Settings(
-        base_url="http://example.test/api/",
-        timeout=5,
-        user_id="1",
-        customer_id="1",
-        client_type="x",
-        channel_id="x",
-        user_ip="x",
-        project_id="x",
-    )
+    settings = _settings(base_url="http://example.test/api/")
     assert settings.calculate_url == "http://example.test/api/v1/ins-premium/calculate"
 
 
 @pytest.mark.unit
 def test_client_sends_post_with_json_and_headers():
-    settings = Settings(
-        base_url="http://example.test/api",
-        timeout=7,
-        user_id="123456",
-        customer_id="123456",
-        client_type="XXXXX",
-        channel_id="XXXXX",
-        user_ip="XXXXX",
-        project_id="XXXXX",
-    )
+    settings = _settings(timeout=7, authorization="Bearer test-token")
     session = MagicMock()
     response = MagicMock()
     session.post.return_value = response
@@ -74,20 +62,12 @@ def test_client_sends_post_with_json_and_headers():
     assert kwargs["timeout"] == 7
     assert kwargs["headers"]["A-userId"] == "123456"
     assert kwargs["headers"]["Content-Type"] == "application/json"
+    assert kwargs["headers"]["Authorization"] == "Bearer test-token"
 
 
 @pytest.mark.unit
 def test_client_can_omit_header():
-    settings = Settings(
-        base_url="http://example.test/api",
-        timeout=5,
-        user_id="123456",
-        customer_id="123456",
-        client_type="XXXXX",
-        channel_id="XXXXX",
-        user_ip="XXXXX",
-        project_id="XXXXX",
-    )
+    settings = _settings()
     session = MagicMock()
     session.post.return_value = MagicMock()
     client = InsPremiumClient(settings=settings, session=session)
@@ -96,3 +76,20 @@ def test_client_can_omit_header():
     headers = session.post.call_args.kwargs["headers"]
     assert "A-userId" not in headers
     assert "A-customerId" in headers
+
+
+@pytest.mark.unit
+def test_client_fetches_keycloak_token_when_enabled():
+    settings = _settings(
+        fetch_token=True,
+        keycloak_token_url="https://idp.example/token",
+        keycloak_client_id="nib-corp-ncins",
+        keycloak_client_secret="secret",
+    )
+    session = MagicMock()
+    session.post.return_value = MagicMock(status_code=200, text="{}", headers={})
+    with patch("ncins_premium.client.fetch_access_token", return_value="abc123") as mocked:
+        client = InsPremiumClient(settings=settings, session=session)
+        client.calculate(example_payload())
+    mocked.assert_called()
+    assert session.post.call_args.kwargs["headers"]["Authorization"] == "Bearer abc123"
