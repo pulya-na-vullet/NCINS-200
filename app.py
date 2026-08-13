@@ -28,8 +28,23 @@ REPORTS_DIR = ROOT / "reports"
 DIST_DIR = ROOT / "dist"
 ARTIFACTS_DIR = Path("/opt/cursor/artifacts")
 CHECKLIST = ROOT / "CHECKLIST.md"
+ENV_FILE = ROOT / ".env"
+ENV_EXAMPLE = ROOT / ".env.example"
 JUNIT_XML = REPORTS_DIR / "junit.xml"
 TEXT_REPORT = REPORTS_DIR / "report.txt"
+
+# При python app.py всегда выставляем UMP TEST credentials
+DEFAULT_ENV_VALUES = {
+    "ENV": "test",
+    "KEYCLOAK_CLIENT_ID": "nib-corp-ncins",
+    "KEYCLOAK_CLIENT_SECRET": "wcpWehuLXKRWwMYE17EXvg9ShCQ7Rovc",
+    "KEYCLOAK_TOKEN_URL": (
+        "https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token"
+    ),
+    "KEYCLOAK_VERIFY_SSL": "0",
+    "FETCH_KEYCLOAK_TOKEN": "1",
+    "API_VERIFY_SSL": "0",
+}
 
 EXCLUDE_DIR_NAMES = {
     ".git",
@@ -75,6 +90,60 @@ def setup_logging(verbose: bool) -> logging.Logger:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("requests").setLevel(logging.WARNING)
     return logging.getLogger("ncins.sign")
+
+
+def ensure_env_file(log: logging.Logger) -> Path:
+    """Создать/обновить .env: cp .env.example .env + UMP TEST credentials."""
+    if not ENV_FILE.exists():
+        if ENV_EXAMPLE.exists():
+            shutil.copyfile(ENV_EXAMPLE, ENV_FILE)
+            log.info("Создан .env из .env.example")
+        else:
+            ENV_FILE.write_text("", encoding="utf-8")
+            log.info("Создан пустой .env (.env.example не найден)")
+
+    lines = ENV_FILE.read_text(encoding="utf-8").splitlines()
+    updated: dict[str, str] = {}
+    new_lines: list[str] = []
+    seen: set[str] = set()
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in line:
+            new_lines.append(line)
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key in DEFAULT_ENV_VALUES:
+            new_value = DEFAULT_ENV_VALUES[key]
+            if value.strip() != new_value:
+                updated[key] = new_value
+            new_lines.append(f"{key}={new_value}")
+            seen.add(key)
+            os.environ[key] = new_value
+        else:
+            new_lines.append(line)
+            os.environ.setdefault(key, value.strip())
+
+    for key, value in DEFAULT_ENV_VALUES.items():
+        if key not in seen:
+            new_lines.append(f"{key}={value}")
+            updated[key] = value
+        os.environ[key] = value
+
+    ENV_FILE.write_text("\n".join(new_lines).rstrip() + "\n", encoding="utf-8")
+    if updated:
+        log.info("Обновлены ключи в .env: %s", ", ".join(sorted(updated)))
+    else:
+        log.info(".env уже содержит нужные UMP TEST credentials")
+
+    log.info(
+        "Keycloak: ENV=%s client_id=%s token_url=%s",
+        os.environ.get("ENV"),
+        os.environ.get("KEYCLOAK_CLIENT_ID"),
+        os.environ.get("KEYCLOAK_TOKEN_URL"),
+    )
+    return ENV_FILE
 
 
 def parse_args() -> argparse.Namespace:
@@ -265,6 +334,9 @@ def main() -> int:
     DIST_DIR.mkdir(parents=True, exist_ok=True)
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Всегда: cp .env.example .env (если нет) + прописать UMP TEST credentials
+    ensure_env_file(log)
+
     exit_code = 0
     plugin = ReportPlugin(log)
 
@@ -287,7 +359,6 @@ def main() -> int:
             os.environ["FORCE_INTEGRATION"] = "1"
             log.info("FORCE_INTEGRATION=1 — API-тесты не пропускаются из-за offline")
 
-        log.info("ENV/Keycloak: %s", os.getenv("ENV") or os.getenv("KEYCLOAK_ENV") or "test")
         log.info("Чек-лист: %s", CHECKLIST)
         log.info("Старт pytest...")
 

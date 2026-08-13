@@ -12,11 +12,11 @@ POST /corp-ncins-gateway/secure/corp-ncins-corp-ncins-api/v1/sign/create-operati
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env
 python app.py
 ```
 
 Что делает `python app.py`:
+- сам делает `cp .env.example .env` (если `.env` нет) и прописывает UMP TEST credentials;
 - гоняет API-проверки через **requests + pytest**;
 - пишет лог в консоль (запрос/ответ/статус);
 - сохраняет текстовый отчёт `reports/report.txt`;
