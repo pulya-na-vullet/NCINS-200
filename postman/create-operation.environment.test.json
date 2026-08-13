@@ -1,0 +1,32 @@
+{
+  "id": "ncins-sign-create-operation-test",
+  "name": "create-operation TEST",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://corp-gateway-test.moscow.alfaintra.net/corp-ncins-gateway/secure/corp-ncins-corp-ncins-api",
+      "enabled": true
+    },
+    {
+      "key": "tokenUrl",
+      "value": "http://corp-gateway-test.moscow.alfaintra.net/mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token",
+      "enabled": true
+    },
+    {
+      "key": "clientId",
+      "value": "nib-corp-ncinsurance",
+      "enabled": true
+    },
+    {
+      "key": "clientSecret",
+      "value": "nib_corp_ncinsurance",
+      "enabled": true
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

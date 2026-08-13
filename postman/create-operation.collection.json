@@ -1,0 +1,228 @@
+{
+  "info": {
+    "name": "NCINS sign create-operation",
+    "description": "Тесты POST /v1/sign/create-operation с токеном НИБ corporate (client nib-corp-ncinsurance)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "aUserId", "value": "123456" },
+    { "key": "aCustomerId", "value": "123456" },
+    { "key": "aClientType", "value": "MOBILE" },
+    { "key": "aChannelId", "value": "nib" },
+    { "key": "aProjectId", "value": "corp-ncinsurance" },
+    { "key": "bodyUserId", "value": "XAGA56" },
+    { "key": "bodyClientId", "value": "UAY4DP" },
+    { "key": "documentId", "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6" }
+  ],
+  "item": [
+    {
+      "name": "Авторизация",
+      "item": [
+        {
+          "name": "Получение токена - 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('access_token present', function () { pm.expect(json.access_token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('accessToken', json.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "client_credentials" },
+                { "key": "client_id", "value": "{{clientId}}" },
+                { "key": "client_secret", "value": "{{clientSecret}}" }
+              ]
+            },
+            "url": "{{tokenUrl}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "create-operation",
+      "item": [
+        {
+          "name": "Positive",
+          "item": [
+            {
+              "name": "create-operation - 200/201 happy path",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "pm.request.headers.upsert({ key: 'A-userId', value: pm.collectionVariables.get('aUserId') });",
+                      "pm.request.headers.upsert({ key: 'A-customerId', value: pm.collectionVariables.get('aCustomerId') });",
+                      "pm.request.headers.upsert({ key: 'A-clientType', value: pm.collectionVariables.get('aClientType') });",
+                      "pm.request.headers.upsert({ key: 'A-channelId', value: pm.collectionVariables.get('aChannelId') });",
+                      "pm.request.headers.upsert({ key: 'A-projectId', value: pm.collectionVariables.get('aProjectId') });",
+                      "pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.environment.get('accessToken') });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200 or 201', function () {",
+                      "  pm.expect([200, 201]).to.include(pm.response.code);",
+                      "});",
+                      "const json = pm.response.json();",
+                      "pm.test('JSON object', function () { pm.expect(json).to.be.an('object'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{bodyUserId}}\",\n  \"clientId\": \"{{bodyClientId}}\",\n  \"documentId\": \"{{documentId}}\"\n}"
+                },
+                "url": "{{baseUrl}}/v1/sign/create-operation"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative",
+          "item": [
+            {
+              "name": "create-operation - 401 without token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 401 or 403', function () {",
+                      "  pm.expect([401, 403]).to.include(pm.response.code);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "A-userId", "value": "{{aUserId}}" },
+                  { "key": "A-customerId", "value": "{{aCustomerId}}" },
+                  { "key": "A-clientType", "value": "{{aClientType}}" },
+                  { "key": "A-channelId", "value": "{{aChannelId}}" },
+                  { "key": "A-projectId", "value": "{{aProjectId}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{bodyUserId}}\",\n  \"clientId\": \"{{bodyClientId}}\",\n  \"documentId\": \"{{documentId}}\"\n}"
+                },
+                "url": "{{baseUrl}}/v1/sign/create-operation"
+              }
+            },
+            {
+              "name": "create-operation - 400 missing userId",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.environment.get('accessToken') });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 400 or 422', function () {",
+                      "  pm.expect([400, 422]).to.include(pm.response.code);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "A-userId", "value": "{{aUserId}}" },
+                  { "key": "A-customerId", "value": "{{aCustomerId}}" },
+                  { "key": "A-clientType", "value": "{{aClientType}}" },
+                  { "key": "A-channelId", "value": "{{aChannelId}}" },
+                  { "key": "A-projectId", "value": "{{aProjectId}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"{{bodyClientId}}\",\n  \"documentId\": \"{{documentId}}\"\n}"
+                },
+                "url": "{{baseUrl}}/v1/sign/create-operation"
+              }
+            },
+            {
+              "name": "create-operation - 400 invalid documentId",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + pm.environment.get('accessToken') });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 400 or 422', function () {",
+                      "  pm.expect([400, 422]).to.include(pm.response.code);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "A-userId", "value": "{{aUserId}}" },
+                  { "key": "A-customerId", "value": "{{aCustomerId}}" },
+                  { "key": "A-clientType", "value": "{{aClientType}}" },
+                  { "key": "A-channelId", "value": "{{aChannelId}}" },
+                  { "key": "A-projectId", "value": "{{aProjectId}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{bodyUserId}}\",\n  \"clientId\": \"{{bodyClientId}}\",\n  \"documentId\": \"not-a-uuid\"\n}"
+                },
+                "url": "{{baseUrl}}/v1/sign/create-operation"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
