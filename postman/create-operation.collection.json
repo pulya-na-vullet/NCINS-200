@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NCINS sign create-operation",
-    "description": "Тесты POST /v1/sign/create-operation с получением токена через mks-gateway / realms/corporate",
+    "description": "Тесты POST /v1/sign/create-operation с получением токена через Keycloak UMP (client nib-corp-ncins)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -43,8 +43,8 @@
               "mode": "urlencoded",
               "urlencoded": [
                 { "key": "grant_type", "value": "client_credentials" },
-                { "key": "client_id", "value": "nib-corp-ncinsurance-accounting" },
-                { "key": "client_secret", "value": "nib_corp_ncinsurance_accounting" }
+                { "key": "client_id", "value": "{{clientId}}" },
+                { "key": "client_secret", "value": "{{clientSecret}}" }
               ]
             },
             "url": "{{tokenUrl}}"

@@ -9,7 +9,17 @@
     },
     {
       "key": "tokenUrl",
-      "value": "http://corp-gateway-test.moscow.alfaintra.net/mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token",
+      "value": "https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token",
+      "enabled": true
+    },
+    {
+      "key": "clientId",
+      "value": "nib-corp-ncins",
+      "enabled": true
+    },
+    {
+      "key": "clientSecret",
+      "value": "wcpWehuLXKRWwMYE17EXvg9ShCQ7Rovc",
       "enabled": true
     },
     {

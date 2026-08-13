@@ -35,17 +35,22 @@ python app.py --skip-if-offline
 
 Нужен доступ к test-gateway (корп VPN).
 
-## Токен (как раньше)
+## Токен (Keycloak UMP, client `nib-corp-ncins`)
 
 ```
 POST {{tokenUrl}}
 grant_type=client_credentials
-client_id=nib-corp-ncinsurance-accounting
-client_secret=nib_corp_ncinsurance_accounting
+client_id=nib-corp-ncins
+client_secret=<из профиля ENV>
 ```
 
-TEST `tokenUrl`:
-`http://corp-gateway-test.../mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token`
+| ENV | tokenUrl |
+|---|---|
+| test | `https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token` |
+| qa | `https://keycloak.umpqak8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token` |
+| dev | `https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token` |
+
+SSL для token/API по умолчанию `verify=0` (как `curl -k`).
 
 ## Пример запроса
 

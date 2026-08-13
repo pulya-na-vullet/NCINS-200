@@ -1,15 +1,15 @@
 {
-  "id": "ncins-sign-create-operation-dev",
-  "name": "create-operation DEV",
+  "id": "ncins-sign-create-operation-qa",
+  "name": "create-operation QA",
   "values": [
     {
       "key": "baseUrl",
-      "value": "https://corp-gateway-dev.moscow.alfaintra.net/corp-ncins-gateway/secure/corp-ncins-corp-ncins-api",
+      "value": "https://corp-gateway-test.moscow.alfaintra.net/corp-ncins-gateway/secure/corp-ncins-corp-ncins-api",
       "enabled": true
     },
     {
       "key": "tokenUrl",
-      "value": "https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token",
+      "value": "https://keycloak.umpqak8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token",
       "enabled": true
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "key": "clientSecret",
-      "value": "OlcnSVnz3UiORtl4XfJZ3NRRZlqw7QPY",
+      "value": "DRcjLK7ZeFSy4P0A7fPuZrD1ppXccxd0",
       "enabled": true
     },
     {

@@ -16,14 +16,14 @@ def test_fetch_access_token_client_credentials():
     with patch("ncins_sign.auth.requests.post", return_value=fake) as post:
         token = fetch_access_token(
             token_url="https://idp.example/token",
-            client_id="nib-corp-ncinsurance-accounting",
+            client_id="nib-corp-ncins",
             client_secret="secret",
             verify_ssl=False,
         )
     assert token == "tok-1"
     kwargs = post.call_args.kwargs
     assert kwargs["data"]["grant_type"] == "client_credentials"
-    assert kwargs["data"]["client_id"] == "nib-corp-ncinsurance-accounting"
+    assert kwargs["data"]["client_id"] == "nib-corp-ncins"
     assert kwargs["verify"] is False
 
 

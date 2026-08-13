@@ -7,16 +7,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Auth из Postman-коллекции "Insurance API Tests"
-# (realm corporate через mks-gateway) — НЕ UMP Keycloak.
+# НИБ пользователи Keycloak в UMP (client_credentials, client_id=nib-corp-ncins)
 KEYCLOAK_PROFILES: dict[str, dict[str, str]] = {
     "test": {
         "token_url": (
-            "http://corp-gateway-test.moscow.alfaintra.net/"
-            "mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token"
+            "https://idp-api-test.alfaintra.net/"
+            "auth/realms/ump/protocol/openid-connect/token"
         ),
-        "client_id": "nib-corp-ncinsurance-accounting",
-        "client_secret": "nib_corp_ncinsurance_accounting",
+        "client_id": "nib-corp-ncins",
+        "client_secret": "wcpWehuLXKRWwMYE17EXvg9ShCQ7Rovc",
+        "base_url": (
+            "https://corp-gateway-test.moscow.alfaintra.net/"
+            "corp-ncins-gateway/secure/corp-ncins-corp-ncins-api"
+        ),
+    },
+    "qa": {
+        "token_url": (
+            "https://keycloak.umpqak8sm1.moscow.alfaintra.net/"
+            "realms/ump/protocol/openid-connect/token"
+        ),
+        "client_id": "nib-corp-ncins",
+        "client_secret": "DRcjLK7ZeFSy4P0A7fPuZrD1ppXccxd0",
         "base_url": (
             "https://corp-gateway-test.moscow.alfaintra.net/"
             "corp-ncins-gateway/secure/corp-ncins-corp-ncins-api"
@@ -24,11 +35,11 @@ KEYCLOAK_PROFILES: dict[str, dict[str, str]] = {
     },
     "dev": {
         "token_url": (
-            "http://corp-gateway-dev.moscow.alfaintra.net/"
-            "mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token"
+            "https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/"
+            "realms/ump/protocol/openid-connect/token"
         ),
-        "client_id": "nib-corp-ncinsurance-accounting",
-        "client_secret": "nib_corp_ncinsurance_accounting",
+        "client_id": "nib-corp-ncins",
+        "client_secret": "OlcnSVnz3UiORtl4XfJZ3NRRZlqw7QPY",
         "base_url": (
             "https://corp-gateway-dev.moscow.alfaintra.net/"
             "corp-ncins-gateway/secure/corp-ncins-corp-ncins-api"
