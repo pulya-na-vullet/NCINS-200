@@ -33,13 +33,14 @@ ENV_EXAMPLE = ROOT / ".env.example"
 JUNIT_XML = REPORTS_DIR / "junit.xml"
 TEXT_REPORT = REPORTS_DIR / "report.txt"
 
-# При python app.py всегда выставляем UMP TEST credentials
+# При python app.py всегда выставляем НИБ corporate credentials (от П. Гурина)
 DEFAULT_ENV_VALUES = {
     "ENV": "test",
-    "KEYCLOAK_CLIENT_ID": "nib-corp-ncins",
-    "KEYCLOAK_CLIENT_SECRET": "wcpWehuLXKRWwMYE17EXvg9ShCQ7Rovc",
+    "KEYCLOAK_CLIENT_ID": "nib-corp-ncinsurance",
+    "KEYCLOAK_CLIENT_SECRET": "nib_corp_ncinsurance",
     "KEYCLOAK_TOKEN_URL": (
-        "https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token"
+        "http://corp-gateway-test.moscow.alfaintra.net/"
+        "mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token"
     ),
     "KEYCLOAK_VERIFY_SSL": "0",
     "FETCH_KEYCLOAK_TOKEN": "1",
@@ -93,7 +94,7 @@ def setup_logging(verbose: bool) -> logging.Logger:
 
 
 def ensure_env_file(log: logging.Logger) -> Path:
-    """Создать/обновить .env: cp .env.example .env + UMP TEST credentials."""
+    """Создать/обновить .env: cp .env.example .env + НИБ corporate credentials."""
     if not ENV_FILE.exists():
         if ENV_EXAMPLE.exists():
             shutil.copyfile(ENV_EXAMPLE, ENV_FILE)
@@ -135,7 +136,7 @@ def ensure_env_file(log: logging.Logger) -> Path:
     if updated:
         log.info("Обновлены ключи в .env: %s", ", ".join(sorted(updated)))
     else:
-        log.info(".env уже содержит нужные UMP TEST credentials")
+        log.info(".env уже содержит нужные НИБ corporate credentials")
 
     log.info(
         "Keycloak: ENV=%s client_id=%s token_url=%s",

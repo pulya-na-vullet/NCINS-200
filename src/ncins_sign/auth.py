@@ -30,7 +30,7 @@ def fetch_access_token(
     timeout: float = 30.0,
     verify_ssl: bool = False,
 ) -> str:
-    """Получить access_token через client_credentials (Keycloak UMP, nib-corp-ncins)."""
+    """Получить access_token через client_credentials (НИБ corporate, nib-corp-ncinsurance)."""
     if _CACHE.valid():
         log.info("Keycloak token: используем cached token")
         return _CACHE.access_token

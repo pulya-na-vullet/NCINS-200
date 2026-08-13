@@ -9,17 +9,17 @@
     },
     {
       "key": "tokenUrl",
-      "value": "https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token",
+      "value": "http://corp-gateway-dev.moscow.alfaintra.net/mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token",
       "enabled": true
     },
     {
       "key": "clientId",
-      "value": "nib-corp-ncins",
+      "value": "nib-corp-ncinsurance",
       "enabled": true
     },
     {
       "key": "clientSecret",
-      "value": "OlcnSVnz3UiORtl4XfJZ3NRRZlqw7QPY",
+      "value": "nib_corp_ncinsurance",
       "enabled": true
     },
     {

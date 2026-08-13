@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NCINS sign create-operation",
-    "description": "Тесты POST /v1/sign/create-operation с получением токена через Keycloak UMP (client nib-corp-ncins)",
+    "description": "Тесты POST /v1/sign/create-operation с токеном НИБ corporate (client nib-corp-ncinsurance)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

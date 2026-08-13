@@ -44,13 +44,14 @@ def test_create_operation_url_built_correctly():
 
 
 @pytest.mark.unit
-def test_ump_test_profile_defaults():
+def test_nib_corporate_test_profile_defaults():
     from ncins_sign.config import KEYCLOAK_PROFILES
 
     profile = KEYCLOAK_PROFILES["test"]
-    assert profile["client_id"] == "nib-corp-ncins"
-    assert "idp-api-test.alfaintra.net" in profile["token_url"]
-    assert "realms/ump" in profile["token_url"]
+    assert profile["client_id"] == "nib-corp-ncinsurance"
+    assert profile["client_secret"] == "nib_corp_ncinsurance"
+    assert "mks-gateway" in profile["token_url"]
+    assert "realms/corporate" in profile["token_url"]
 
 
 @pytest.mark.unit
@@ -105,7 +106,7 @@ def test_client_fetches_keycloak_token_when_enabled():
     settings = _settings(
         fetch_token=True,
         keycloak_token_url="https://idp.example/token",
-        keycloak_client_id="nib-corp-ncins",
+        keycloak_client_id="nib-corp-ncinsurance",
         keycloak_client_secret="secret",
     )
     session = MagicMock()

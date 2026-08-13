@@ -104,11 +104,11 @@ class SignCreateOperationClient:
         if response.status_code == 401 and "Jwt issuer" in body:
             log.error(
                 "401 Jwt issuer: gateway не принимает issuer токена. "
-                "Проверьте, что берёте UMP token (client nib-corp-ncins) для нужного контура."
+                "Для НИБ нужен corporate token (client nib-corp-ncinsurance), не UMP."
             )
         if response.status_code == 403 and "RBAC" in body:
             log.error(
-                "RBAC 403: у клиента nib-corp-ncins нет права на этот метод "
-                "(нужно выдать доступ на /v1/sign/create-operation)."
+                "RBAC 403: у клиента нет права на /v1/sign/create-operation. "
+                "Ожидается client nib-corp-ncinsurance (не *-accounting)."
             )
         return response

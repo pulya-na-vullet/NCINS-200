@@ -16,11 +16,11 @@ python app.py
 ```
 
 Что делает `python app.py`:
-- сам делает `cp .env.example .env` (если `.env` нет) и прописывает UMP TEST credentials;
+- сам делает `cp .env.example .env` (если `.env` нет) и прописывает credentials `nib-corp-ncinsurance`;
 - гоняет API-проверки через **requests + pytest**;
 - пишет лог в консоль (запрос/ответ/статус);
 - сохраняет текстовый отчёт `reports/report.txt`;
-- собирает ZIP архив проекта в `dist/` (и в `/opt/cursor/artifacts/`) — его можно приложить к задаче.
+- собирает ZIP архив проекта в `dist/` — его можно приложить к задаче.
 
 Опции:
 
@@ -35,22 +35,19 @@ python app.py --skip-if-offline
 
 Нужен доступ к test-gateway (корп VPN).
 
-## Токен (Keycloak UMP, client `nib-corp-ncins`)
+## Токен (НИБ, от бэкенда)
 
+```bash
+curl --location 'http://corp-gateway-test.moscow.alfaintra.net/mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'grant_type=client_credentials' \
+  --data-urlencode 'client_id=nib-corp-ncinsurance' \
+  --data-urlencode 'client_secret=nib_corp_ncinsurance'
 ```
-POST {{tokenUrl}}
-grant_type=client_credentials
-client_id=nib-corp-ncins
-client_secret=<из профиля ENV>
-```
 
-| ENV | tokenUrl |
-|---|---|
-| test | `https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token` |
-| qa | `https://keycloak.umpqak8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token` |
-| dev | `https://keycloak.umpdevwk8sm1.moscow.alfaintra.net/realms/ump/protocol/openid-connect/token` |
-
-SSL для token/API по умолчанию `verify=0` (как `curl -k`).
+Не путать с:
+- `nib-corp-ncinsurance-accounting` — accounting gateway
+- `nib-corp-ncins` (UMP) — заявки `/applications`
 
 ## Пример запроса
 

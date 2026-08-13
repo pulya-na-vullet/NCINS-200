@@ -3,8 +3,8 @@
 Метод:
 `POST https://corp-gateway-test.moscow.alfaintra.net/corp-ncins-gateway/secure/corp-ncins-corp-ncins-api/v1/sign/create-operation`
 
-Токен: Keycloak UMP (`client_credentials`, `client_id=nib-corp-ncins`)  
-TEST: `https://idp-api-test.alfaintra.net/auth/realms/ump/protocol/openid-connect/token`
+Токен НИБ: corporate / mks-gateway (`client_id=nib-corp-ncinsurance`)  
+TEST: `http://corp-gateway-test.../mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token`
 | № | Проверка | Что именно проверяет |
 |---|---|---|
 | 1 | Happy-path из curl | Body `userId/clientId/documentId` + headers из curl → 200/201 и id операции |
