@@ -1,0 +1,112 @@
+{
+	"id": "19fff02a-6b25-45a9-91b0-832a0972b6f2",
+	"name": "TEST env / Insurance API Tests",
+	"values": [
+		{
+			"key": "baseUrl",
+			"value": "http://corp-gateway-test.moscow.alfaintra.net/corp-ncins-acc-gateway/secure/corp-ncins-acc-corp-ncins-acc-api",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "accessToken",
+			"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkbUd0OXhCRnBlWnlveWxpRWgxVE1zdENGSFduTkJqd1hPaWF2aVZaRGJBIn0.eyJleHAiOjE3Nzk5NzYzMzQsImlhdCI6MTc3OTk3NDUzNCwianRpIjoiNjY2NGNhMTgtYmMwMS00NWE5LTg0ZmQtZmM1Y2RiMjczOWQ3IiwiaXNzIjoiaHR0cDovL2tleWNsb2FrLW5pYi1pbnQvcmVhbG1zL2NvcnBvcmF0ZSIsInN1YiI6ImQxYzBiZjM1LTExMGMtNGVlOC04ZTljLTA1N2YyMmU5MjE3NyIsInR5cCI6IkJlYXJlciIsImF6cCI6Im5pYi1jb3JwLW5jaW5zdXJhbmNlLWFjY291bnRpbmciLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkFMTE9XX0NPUlBfTk9OX0NSRURJVF9JTlNVUkFOQ0VfQUNDT1VOVElOR19DT05UUkFDVFMiLCJBTExPV19DT1JQX05PTl9DUkVESVRfSU5TVVJBTkNFX0FDQ09VTlRJTkdfUFJPR1JBTVMiXX0sInNjb3BlIjoiZW1haWwgcHJvZmlsZSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY2xpZW50SWQiOiJuaWItY29ycC1uY2luc3VyYW5jZS1hY2NvdW50aW5nIiwiY2xpZW50SG9zdCI6IjEwLjAuMTAwLjIxMyIsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC1uaWItY29ycC1uY2luc3VyYW5jZS1hY2NvdW50aW5nIiwiY2xpZW50QWRkcmVzcyI6IjEwLjAuMTAwLjIxMyJ9.AUGRPZgQBj-NT4S2naSI_dodBwF19Ya-DkrL77Uf-x8NN0ic_T1bBxLnzpSAQUi7F0IUkYHuZ8GrbqqOdUpfaqeEPXgIA3k0M9DvOkf5WyUBwWxdsQ9Jg2Vs6aUCnJHin_XInt0trg42ruQfdSUu5AP-c34XzHNtqfQccxuj-mIa63nNaCqdQRS7mSnSaRCOQhGkK9iq0nwF6G10oSm2SJh-tpmyn0-B4kOIaY5430ny9LUaDov2-V9TnavFBviNWo35cvPtqZupJZ0XqvPvlErYBR2dN4Ihirif_CYTciMDAo_cYJW3lC4UXOFWw2ZognTOWFGqir05EGSdosHzXw",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "programId",
+			"value": "2",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "expectedTokenExpiresIn",
+			"value": "1800",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "generatedContractNumber",
+			"value": "Z6922/395/52296431/1",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "tokenUrl",
+			"value": "http://corp-gateway-test.moscow.alfaintra.net/mks-gateway/public/auth/realms/corporate/protocol/openid-connect/token",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "expectedProgramCode",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "expiredAccessToken",
+			"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkbUd0OXhCRnBlWnlveWxpRWgxVE1zdENGSFduTkJqd1hPaWF2aVZaRGJBIn0.eyJleHAiOjE3ODAzMDc5MzIsImlhdCI6MTc4MDMwNjEzMiwianRpIjoiYTkxN2E0MGUtMmYxNC00MzFjLWEyZjQtZjYwMjE3ZjZhYmJhIiwiaXNzIjoiaHR0cDovL2tleWNsb2FrLW5pYi1pbnQvcmVhbG1zL2NvcnBvcmF0ZSIsInN1YiI6ImQxYzBiZjM1LTExMGMtNGVlOC04ZTljLTA1N2YyMmU5MjE3NyIsInR5cCI6IkJlYXJlciIsImF6cCI6Im5pYi1jb3JwLW5jaW5zdXJhbmNlLWFjY291bnRpbmciLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIkFMTE9XX0NPUlBfTk9OX0NSRURJVF9JTlNVUkFOQ0VfQUNDT1VOVElOR19DT05UUkFDVFMiLCJBTExPV19DT1JQX05PTl9DUkVESVRfSU5TVVJBTkNFX0FDQ09VTlRJTkdfUFJPR1JBTVMiXX0sInNjb3BlIjoiZW1haWwgcHJvZmlsZSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY2xpZW50SWQiOiJuaWItY29ycC1uY2luc3VyYW5jZS1hY2NvdW50aW5nIiwiY2xpZW50SG9zdCI6IjEwLjAuODguMTQ3IiwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LW5pYi1jb3JwLW5jaW5zdXJhbmNlLWFjY291bnRpbmciLCJjbGllbnRBZGRyZXNzIjoiMTAuMC44OC4xNDcifQ.FEXOrSeXBq7yFcOjw8Pq6w90Tq6cx-hSrXxXRpXBYBmFoztbVbujUqGM6DalKVnWan3OFwl15xHIKGz1aBkiEnT_YoHaELb8b9Qp7Z--KGgQz9h3rcxrkl9wXyFpPdBwbk6qXrRIiu0nkVnGFcXZSVJ1sjTQ-E_PO_ZALLEYvKLWTN9Bj2_QD2Pgs2IY2ME5jQEjVW6uevVL0bnjALUsVZAOrYGJkVFIy2F_jK7uMUKit-yy58m2-n57NdEzb_bZdYW3rD4unpK7O4MmYbrBNd6AMpaM32g4aSiuWbtXB-I4o1t654ZulPWeiloUUyMWSpqw7QfdVwYRvmku_gyZrw",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "createdOwnerId",
+			"value": "U_M2XXX",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "contractNumber",
+			"value": "Z6922/395/60489937/1",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "accountContractNumber",
+			"value": "Z6922/395/67131698/1",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "propertyContractNumber",
+			"value": "Z6922/395/31913805/1",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "employeeHealthContractNumber",
+			"value": "Z6922/395/71981257/1",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "createdContractNumber",
+			"value": "Z6922/395/96612086/14",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "сontractNumber",
+			"value": "Z6922/395/05666962/1",
+			"type": "any",
+			"enabled": true
+		},
+		{
+			"key": "debitAccountNumber",
+			"value": "435234634567345764587",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "updatedDebitAccountNumber",
+			"value": "12345678901234567891",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"color": 300,
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2026-06-24T07:08:52.248Z",
+	"_postman_exported_using": "Postman/12.16.1"
+}
